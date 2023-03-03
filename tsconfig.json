@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "es2017",                                  
+    "module": "Node16",                 
+    "rootDir": "./",                               
+    "moduleResolution": "node",                       
+    "outDir": "./dist",                                   
+    "strict": true,           
+  
+  }
+}
