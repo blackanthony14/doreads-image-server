@@ -4,5 +4,6 @@ export default function router(app: Application): void {
   /**
    * Every source are specifed here
    */
-  app.use("/",images);
+  app.use("/", images);
+  app.get("/health", (_req, res) => res.sendStatus(200));
 }
