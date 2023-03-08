@@ -2,7 +2,6 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import path, { join, resolve } from "path";
 import { v4 } from "uuid";
 import { HttpError } from "../types/custom.error";
-import * as fs from "fs";
 
 export interface FileMetadata {
   id: string;
@@ -23,7 +22,7 @@ export type CreateImage = Omit<
 
 class ImageService {
   private defaultPath = resolve("./covers");
-  private metadataFilePath = resolve(__dirname, "../database/metadata.json");
+  private metadataFilePath = resolve(__dirname, "../database/directory.json");
 
   private validateMimeType(mimeType: string) {
     if (!mimeType.includes("image")) {
