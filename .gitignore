@@ -4,3 +4,4 @@
 .env
 yarn.lock
 dist/
+/covers
