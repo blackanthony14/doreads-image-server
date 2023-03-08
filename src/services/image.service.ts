@@ -23,7 +23,7 @@ export type CreateImage = Omit<
 
 class ImageService {
   private defaultPath = resolve("./covers");
-  private metadataFilePath = resolve(__dirname, "metadata.json");
+  private metadataFilePath = resolve(__dirname, "../database/metadata.json");
 
   private validateMimeType(mimeType: string) {
     if (!mimeType.includes("image")) {
