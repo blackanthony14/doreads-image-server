@@ -2,9 +2,11 @@ import { Request, Response } from "express";
 import { BaseController } from "../types/base.controller";
 import imageService from "../services/image.service";
 import { HttpError } from "../types/custom.error";
+import { resolve } from "path";
 
 class ImagesController extends BaseController {
   async getImage(req: Request, res: Response) {
+    const  defaultPath = resolve("./covers");
     try {
       const id = req.params.id;
       if (!id) {
@@ -13,7 +15,7 @@ class ImagesController extends BaseController {
 
       const image = await imageService.findImage(id);
 
-      res.sendFile(image.default + image.path+ image.name);
+      res.sendFile(defaultPath + image);
     } catch (error) {
       this.errorHandler(res, error);
     }
