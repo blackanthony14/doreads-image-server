@@ -4,6 +4,7 @@ COPY package*.json ./
 COPY yarn.lock ./
 RUN yarn install && yarn cache clean
 COPY . .
+RUN yarn prisma generate
 RUN yarn build
 EXPOSE 8000
 CMD ["node", "./dist/index.js"]

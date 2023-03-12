@@ -12,10 +12,7 @@ export interface FileMetadata {
   originalName: string;
 }
 
-export type CreateImage = Omit<
-  Prisma.ImagesCreateInput,
-  "id" 
->;
+export type CreateImage = Omit<Prisma.ImagesCreateInput, "id">;
 
 class ImageService {
   private defaultPath = resolve("./covers");
@@ -80,7 +77,7 @@ class ImageService {
         uuid: meta.id,
         path: filePath,
         originalName: meta.originalName,
-      }
+      },
     });
     return {
       imageName: image.uuid,
@@ -99,6 +96,5 @@ class ImageService {
     return image.path;
   }
 }
-
 
 export default new ImageService();
