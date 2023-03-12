@@ -2,6 +2,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import path, { join, resolve } from "path";
 import { v4 } from "uuid";
 import { HttpError } from "../types/custom.error";
+import { Prisma } from "@prisma/client";
+import client from "../database/client";
 
 export interface FileMetadata {
   id: string;
@@ -11,25 +13,18 @@ export interface FileMetadata {
 }
 
 export type CreateImage = Omit<
-  {
-    id: string;
-    filename: string;
-    originalName: string;
-    path: string;
-  },
-  "id"
+  Prisma.ImagesCreateInput,
+  "id" 
 >;
 
 class ImageService {
   private defaultPath = resolve("./covers");
-  private metadataFilePath = resolve(__dirname, "../database/directory.json");
 
   private validateMimeType(mimeType: string) {
     if (!mimeType.includes("image")) {
       throw new HttpError("File type is not supported", 400);
     }
   }
-
   private async saveFile(
     file: Express.Multer.File,
     dir: string,
@@ -45,25 +40,20 @@ class ImageService {
     }
   }
 
-  private saveMetadata(metadata: FileMetadata[]) {
-    writeFileSync(this.metadataFilePath, JSON.stringify(metadata));
+  findByFileName(originalName: string) {
+    return client.images.findFirst({
+      where: {
+        originalName,
+      },
+    });
   }
 
-  private readMetadata(): FileMetadata[] {
-    try {
-      const data = readFileSync(this.metadataFilePath);
-      return JSON.parse(data.toString());
-    } catch (error) {
-      return [];
-    }
-  }
-
-  private createImageMetadata(file: Express.Multer.File): FileMetadata {
+  private createFileMetadata(file: Express.Multer.File) {
     const id = v4();
     const type = file.originalname.split(".")[1];
     return {
       id,
-      filePath: "/",
+      filePath: "",
       filename: `${id}.${type}`,
       originalName: file.originalname,
     };
@@ -71,54 +61,44 @@ class ImageService {
 
   async saveImage(file: Express.Multer.File) {
     this.validateMimeType(file.mimetype);
+    const meta = this.createFileMetadata(file);
 
-    const metadata = this.readMetadata();
-    const exist = metadata.find(
-      (item) => item.originalName === file.originalname
-    );
+    const dir = this.defaultPath + meta.filePath;
+    const filePath = meta.filePath + "/" + meta.filename;
+
+    const exist = await this.findByFileName(meta.originalName);
+
     if (exist) {
       throw new HttpError("Image already exists", 400);
     }
 
-    const imageMetadata = this.createImageMetadata(file);
-    const dir = this.defaultPath + imageMetadata.filePath;
-    const filePath = imageMetadata.filePath + "/" + imageMetadata.filename;
-    this.saveFile(
-      file,
-      this.defaultPath + imageMetadata.filePath,
-      this.defaultPath + imageMetadata.filePath + "/" + imageMetadata.filename
-    );
-  
-    const createImage: CreateImage = {
-      filename: imageMetadata.filename,
-      path: filePath,
-      originalName: imageMetadata.originalName,
-    };
+    this.saveFile(file, dir, dir + "/" + meta.filename);
 
-    metadata.push(imageMetadata);
-    this.saveMetadata(metadata);
-
+    const image = await client.images.create({
+      data: {
+        filename: meta.filename,
+        uuid: meta.id,
+        path: filePath,
+        originalName: meta.originalName,
+      }
+    });
     return {
-      imageName: imageMetadata.id,
+      imageName: image.uuid,
     };
   }
-  async findImage(imageId: string) {
-    try {
-      const metadata = this.readMetadata();
-      const image = metadata.find((item) => item.id === imageId);
 
-      if (!image) {
-        throw new HttpError("Image not found ID", 404);
-      }
-      return {
-        default: this.defaultPath,
-        path: image.filePath,
-        name: image.filename
-      };
-    } catch (error) {
-      throw new HttpError("File not found", 404);
+  async findImage(id: string) {
+    const image = await client.images.findFirst({
+      where: {
+        uuid: id,
+      },
+    });
+    if (!image) {
+      throw new HttpError("Image doesn't exist", 404);
     }
+    return image.path;
   }
 }
+
 
 export default new ImageService();
